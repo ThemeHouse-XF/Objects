@@ -1,0 +1,1591 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="ThemeHouse_Objects" title="[⌂] Objects" version_string="1.0.0" version_id="1447261019" url="http://xf.themehouse.io/" install_callback_class="ThemeHouse_Install" install_callback_method="install" uninstall_callback_class="ThemeHouse_Install" uninstall_callback_method="uninstall">
+  <admin_navigation>
+    <navigation navigation_id="classes" parent_navigation_id="applications" display_order="100" link="classes" admin_permission_id="" debug_only="0" hide_no_children="1"/>
+    <navigation navigation_id="createClass" parent_navigation_id="classes" display_order="20" link="classes/add" admin_permission_id="object" debug_only="0" hide_no_children="0"/>
+    <navigation navigation_id="listClasses" parent_navigation_id="classes" display_order="1" link="classes" admin_permission_id="object" debug_only="0" hide_no_children="0"/>
+  </admin_navigation>
+  <admin_permissions>
+    <admin_permission admin_permission_id="handler" display_order="3000"/>
+    <admin_permission admin_permission_id="handlerType" display_order="3000"/>
+    <admin_permission admin_permission_id="object" display_order="500"/>
+    <admin_permission admin_permission_id="objectClass" display_order="3000"/>
+  </admin_permissions>
+  <admin_style_properties/>
+  <admin_templates>
+    <template title="class_delete"><![CDATA[<xen:title>{xen:phrase confirm_deletion_of_class}: {$class.title}</xen:title>
+<xen:h1>{xen:phrase confirm_deletion_of_class}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'classes/edit', $class}">{$class.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'classes/delete', $class}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase please_confirm_that_you_want_to_delete_following_class}:</p>
+	<strong><a href="{xen:adminlink 'classes/edit', $class}">{$class.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase delete_class}" />
+	
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="class_edit"><![CDATA[<xen:title>{xen:if '{$class.class_id}', '{xen:phrase edit_class}: {$class.title}', '{xen:phrase create_new_class}'}</xen:title>
+
+<xen:if is="{$class.class_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes}#{xen:helper listitemid, $class.class_id}">{$class.title}</xen:breadcrumb>
+	</xen:navigation>
+<xen:else />
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'classes/save', $class}">
+
+	<ul class="tabs Tabs" data-panes="#classPanes > li">
+		<xen:hook name="admin_class_edit_tabs">
+		<li class="active"><a>{xen:phrase basic_information}</a></li>
+		<li><a>{xen:phrase route_prefixes}</a></li>
+		<li><a>{xen:phrase export_options}</a></li>
+		</xen:hook>
+	</ul>
+
+	<ul id="classPanes">
+		<xen:hook name="admin_class_edit_panes">
+		<li>
+			<xen:textboxunit label="{xen:phrase class_id}:" name="class_id" value="{$class.class_id}" />
+
+			<xen:textboxunit label="{xen:phrase title}:" name="title" value="{$class.title}" data-liveTitleTemplate="{xen:if {$class.class_id},
+				'{xen:phrase edit_class}: <em>%s</em>',
+				'{xen:phrase create_new_class}: <em>%s</em>'}" />
+
+			<fieldset>
+				<xen:textboxunit label="{xen:phrase class_id_plural}:" name="class_id_plural" value="{$class.class_id_plural}" />
+				<xen:textboxunit label="{xen:phrase title_plural}:" name="title_plural" value="{$class.title_plural}" />
+			</fieldset>
+			<fieldset>
+				<xen:checkboxunit label="">
+					<xen:option name="is_abstract" label="{xen:phrase abstract_class}" selected="{$class.is_abstract}" />
+				</xen:checkboxunit>
+				<xen:selectunit name="extend" label="{xen:phrase extends}:" selected="{$class.extend}">
+					<xen:option />
+					<xen:foreach loop="$classes" key="$classId" value="$extendClass">
+						<xen:option value="{$classId}" label="{$extendClass.title}" selected="{$classId} == {$class.extend}" />
+					</xen:foreach>
+				</xen:selectunit>
+				<xen:selectunit name="parent" label="{xen:phrase parent_class}:" selected="{$class.parent}">
+					<xen:option />
+					<xen:foreach loop="$classes" key="$classId" value="$parentClass">
+						<xen:option value="{$classId}" label="{$parentClass.title}" selected="{$classId} == {$class.parent}" />
+					</xen:foreach>
+				</xen:selectunit>
+			</fieldset>
+		</li>
+		<li>
+			<xen:checkboxunit label="{xen:phrase route_prefixes}:">
+				<xen:option name="route_prefix_enable" label="{xen:phrase public_route_prefix}" selected="{$class.route_prefix}">
+					<xen:textbox name="route_prefix" value="{$class.route_prefix}" />
+					<xen:checkbox>
+						<xen:option name="permissions[public][view]" label="{xen:phrase view}" selected="{$class.permissions.public.view}" />
+						<xen:option name="permissions[public][create]" label="{xen:phrase create}" selected="{$class.permissions.public.create}" />
+						<xen:option name="permissions[public][edit]" label="{xen:phrase edit}" selected="{$class.permissions.public.edit}" />
+						<xen:option name="permissions[public][delete][hard]" label="{xen:phrase hard_delete}" selected="{$class.permissions.public.delete.hard}">
+							<xen:checkbox>
+								<xen:option name="permissions[public][delete][soft]" label="{xen:phrase soft_delete}" selected="{$class.permissions.public.delete.soft}" />
+							</xen:checkbox>
+						</xen:option>
+					</xen:checkbox>
+				</xen:option>
+				<xen:option name="route_prefix_admin_enable" label="{xen:phrase admin_control_panel_route_prefix}" selected="{$class.route_prefix_admin}">
+					<xen:textbox name="route_prefix_admin" value="{$class.route_prefix_admin}" />
+					<xen:checkbox>
+						<xen:option name="permissions[admin][view]" label="{xen:phrase view}" selected="{$class.permissions.admin.view}" />
+						<xen:option name="permissions[admin][create]" label="{xen:phrase create}" selected="{$class.permissions.admin.create}" />
+						<xen:option name="permissions[admin][edit]" label="{xen:phrase edit}" selected="{$class.permissions.admin.edit}" />
+						<xen:option name="permissions[admin][delete]" label="{xen:phrase delete}" selected="{$class.permissions.admin.delete}" />
+					</xen:checkbox>
+				</xen:option>
+			</xen:checkboxunit>
+			<fieldset>
+				<xen:spinboxunit label="{xen:phrase objects_per_page}:" name="per_page" value="{$class.per_page}" />
+			</fieldset>
+			<fieldset>
+				<xen:checkboxunit label="{xen:phrase datawriter_options}:">
+					<xen:option name="datawriter_options[visitor]" label="{xen:phrase log_visitor_details}" selected="{$class.datawriter_options.visitor}" />
+					<xen:option name="datawriter_options[ip_address]" label="{xen:phrase log_ip_address}" selected="{$class.datawriter_options.ip_address}" />
+					<xen:option name="datawriter_options[lock]" label="{xen:phrase lock}" selected="{$class.datawriter_options.lock}" />
+					<xen:option name="datawriter_options[sticky]" label="{xen:phrase sticky}" selected="{$class.datawriter_options.sticky}" />
+				</xen:checkboxunit>
+			</fieldset>
+		</li>
+		<li>
+			<xen:textboxunit label="{xen:phrase title_full}:" name="title_full" value="{$class.title_full}" />
+			<xen:textboxunit label="{xen:phrase table_name}:" name="table_name" value="{$class.table_name}" />
+			<xen:textboxunit label="{xen:phrase primary_key_id}:" name="primary_key_id" value="{$class.primary_key_id}" />
+
+			<fieldset>
+				<xen:selectunit label="{xen:phrase permission_group}:" name="permission_group_id" value="{$class.permission_group_id}">
+					<xen:option value=""></xen:option>
+					<xen:options source="$permissionGroups" />
+				</xen:selectunit>
+				<xen:selectunit label="{xen:phrase interface_group}:" name="interface_group_id" value="{$class.interface_group_id}">
+					<xen:option value=""></xen:option>
+					<xen:options source="$interfaceGroups" />
+				</xen:selectunit>
+				<xen:selectunit label="{xen:phrase moderator_interface_group}:" name="moderator_interface_group_id" value="{$class.moderator_interface_group_id}">
+					<xen:option value=""></xen:option>
+					<xen:options source="$interfaceGroups" />
+				</xen:selectunit>
+			</fieldset>
+		</li>
+		</xen:hook>
+	</ul>
+	<fieldset>
+		<xen:include template="helper_addon_unit" />
+	</fieldset>
+
+	<xen:submitunit save="{xen:phrase save_class}">
+		<xen:if is="{$class.class_id}">
+			<input type="button" value="{xen:phrase delete_class}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink classes/delete, $class}" />
+		</xen:if>
+	</xen:submitunit>
+
+</xen:form>]]></template>
+    <template title="class_list"><![CDATA[<xen:title>{xen:phrase classes_and_objects}</xen:title>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'classes/add'}" class="button">+ {xen:phrase create_new_class}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink classes/toggle}" class="section AutoValidator">
+
+	<xen:if is="{$addOns}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase classes}
+		</h2>
+
+		<ol class="FilterList" id="ObjectFieldList">
+		<xen:foreach loop="$addOns" key="$addOnId" value="$classes">
+			<h3 class="textHeading" id="{xen:helper listitemid, 'addon_{$addOnId}'}">
+				<xen:if is="{$addOnId}">{$addOnTitles.{$addOnId}}<xen:else />({xen:phrase ungrouped})</xen:if>
+			</h3>
+			<xen:foreach loop="$classes" key="$classId" value="$class">
+				<xen:listitem id="{$class.classId}"
+					label="{$class.title}"
+					snippet="{$classId}"
+					href="{xen:adminlink 'classes/list', $class}"
+					delete="{xen:adminlink 'classes/delete', $class}"
+					deletehint="{xen:phrase delete}">
+					<xen:html>
+						<a href="{xen:adminlink 'classes/edit', $class}" class="secondaryContent">{xen:phrase edit}</a>
+					</xen:html>
+				</xen:listitem>
+			</xen:foreach>
+		</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:number $classCount}</span>', 'total={xen:number $classCount}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase there_are_no_classes}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="object_delete"><![CDATA[<xen:title>{xen:phrase confirm_deletion_of_object}: {$object.title}</xen:title>
+<xen:h1>{xen:phrase confirm_deletion_of_object}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'objects/edit', $object}">{$object.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'objects/delete', $object}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase please_confirm_that_you_want_to_delete_following_object}:</p>
+	<strong><a href="{xen:adminlink 'objects/edit', $object}">{$object.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase delete_object}" />
+	
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="object_edit"><![CDATA[<xen:title>{xen:if '{$object.object_id}', '{xen:phrase edit_object}: {$object.title}', '{xen:phrase create_new_object}'}</xen:title>
+
+<xen:h1>{xen:if '{$object.object_id}', '{xen:phrase edit_object}: <em>{$object.title}</em>', '{xen:phrase create_new_object}'}</xen:h1>
+
+<xen:if is="{$object.object_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes/list, $class}">{$class.title}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes/list, $class}#{xen:helper listitemid, $object.object_id}">{$object.title}</xen:breadcrumb>
+	</xen:navigation>
+<xen:else />
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes/list, $class}">{$class.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'objects/save', $object}" class="AutoValidator">
+
+	<ul class="tabs Tabs" data-panes="#objectPanes > li">
+		<xen:hook name="admin_object_edit_tabs">
+		<xen:if is="!{$class.title_field} || {$customFields.0.fields}">
+			<li class="active"><a>{xen:phrase basic_information}</a></li>
+		</xen:if>
+		</xen:hook>
+	</ul>
+	
+	<ul id="objectPanes">
+		<xen:hook name="admin_object_edit_panes">
+		<xen:if hascontent="true">
+		<li>
+			<xen:contentcheck>
+				<xen:hook name="admin_object_edit_basic_info_pane">
+				<xen:textboxunit label="{xen:phrase title}:" name="title" value="{$object.title}" data-liveTitleTemplate="{xen:if {$object.object_id},
+					'{xen:phrase edit_object}: <em>%s</em>',
+					'{xen:phrase create_new_object}: <em>%s</em>'}" />
+				<xen:textboxunit label="{xen:phrase subtitle}:" name="subtitle" value="{$object.subtitle}" />
+				</xen:hook>
+			</xen:contentcheck>
+		</li>
+		</xen:if>
+		</xen:hook>
+	</ul>
+
+	<input type="hidden" name="class_id" value="{$class.class_id}" />
+
+	<xen:submitunit save="{xen:phrase save_object}">
+		<xen:if is="{$object.object_id}">
+			<input type="button" value="{xen:phrase delete_object}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink objects/delete, $object}" />
+		</xen:if>
+	</xen:submitunit>
+</xen:form>]]></template>
+    <template title="object_list"><![CDATA[<xen:title>{xen:phrase objects}: {$class.title}</xen:title>
+
+<xen:h1>{xen:phrase objects}: <em>{$class.title}</em></xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+	<xen:breadcrumb href="{xen:adminlink classes}#{xen:helper listitemid, $class.class_id}">{$class.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'classes/edit', $class}" class="button">{xen:phrase edit_class}</a>
+	<a href="{xen:adminlink 'classes/add', $class}" class="button">+ {xen:phrase create_new_x_object, 'title={$class.title}'}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink objects/toggle}" class="section AutoValidator">
+
+	<xen:if is="{$objects}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase objects}
+		</h2>
+
+		<ol class="FilterList">
+			<xen:foreach loop="$objects" key="$objectId" value="$object">
+				<xen:listitem id="{$object.objectId}"
+					label="{xen:raw $object.title}"
+					snippet="{$object.subtitle}"
+					href="{xen:adminlink 'objects/edit', $object}"
+					delete="{xen:adminlink 'objects/delete', $object}"
+					deletehint="{xen:phrase delete}">
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $objects}</span>', 'total={xen:count $objects}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase there_are_no_objects}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="th_class_delete_objects"><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_class_objects}: {$class.title}</xen:title>
+
+<xen:h1>{xen:phrase th_confirm_deletion_of_class_objects}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'classes/edit', $class}">{$class.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'classes/delete', $class}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_class_objects}:</p>
+	<strong><a href="{xen:adminlink 'classes/edit', $class}">{$class.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase th_delete_class_objects}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="th_class_edit_objects"><![CDATA[<xen:title>{xen:if '{$class.class_id}', '{xen:phrase th_edit_class_objects}: {$class.title}', '{xen:phrase th_create_new_class_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$class.class_id}', '{xen:phrase th_edit_class_objects}: <em>{$class.title}</em>', '{xen:phrase th_create_new_class_objects}'}</xen:h1>
+
+<xen:if is="{$class.class_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink 'classes'}#{xen:helper listitemid, $class.class_id}">{$class.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'classes/save', $class}"
+	class="AutoValidator"
+	data-fieldValidatorUrl="{xen:adminlink 'classes/validate-field', $class}"
+	data-redirect="on">
+
+	<fieldset>
+	<xen:textboxunit label="{xen:phrase th_class_title_objects}:" name="title" value="{$class.title}" data-liveTitleTemplate="{xen:if {$class.class_id},
+		'{xen:phrase th_edit_class_objects}: <em>%s</em>',
+		'{xen:phrase th_create_new_class_objects}: <em>%s</em>'}" />
+	</fieldset>
+	<xen:selectunit label="{xen:phrase th_class_class_id_objects}:" explain=""
+		name="class_id" id="ctrl_class_id"
+		value="{$class.class_id}"
+	>
+		<xen:options source="$choices.class_id" />
+	</xen:selectunit>
+
+	<xen:submitunit>
+		<input type="submit" name="saveexit" value="{xen:phrase save_and_exit}" accesskey="e" class="button primary" id="saveExitButton" />
+		<input type="submit" name="reload" value="{xen:phrase save_changes}" accesskey="s" class="button" id="saveReloadButton" data-ajaxvalue="{xen:phrase save_all_changes}" />
+		<xen:if is="{$class.class_id}">
+			<input type="button" value="{xen:phrase th_delete_class_objects}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink classes/delete, $class}" />
+		</xen:if>
+	</xen:submitunit>
+</xen:form>]]></template>
+    <template title="th_class_list_objects"><![CDATA[<xen:title>{xen:phrase th_classes_objects}</xen:title>
+
+<xen:h1>{xen:phrase th_classes_objects}</xen:h1>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'classes/add'}" class="button">+ {xen:phrase th_create_new_class_objects}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink 'classes/toggle'}" class="section AutoValidator">
+
+	<xen:if is="{$classes}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase th_classes_objects}
+		</h2>
+
+		<ol class="FilterList">
+			<xen:foreach loop="$classes" key="$classId" value="$class">
+				<xen:listitem id="{$classId}"
+					label="{xen:raw $class.title}"
+					snippet="{$class.class_id}"
+					href="{xen:adminlink 'classes/edit', $class}"
+					delete="{xen:adminlink 'classes/delete', $class}"
+					deletehint="{xen:phrase delete}">
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $classes}</span>', 'total={xen:count $classes}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase th_there_are_no_classes_objects}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="th_field_edit_choice_replace_objects"><![CDATA[<!--<h3 class="textHeading">{xen:phrase options_for_choice_fields}</h3>-->]]></template>
+    <template title="th_handler_add_objects"><![CDATA[<xen:title>{xen:phrase th_create_new_handler_objects}</xen:title>
+<xen:h1>{xen:phrase th_create_new_handler_objects}</xen:h1>
+
+<xen:form action="{xen:adminlink 'handlers/insert'}">
+
+	<xen:radiounit name="handler_type_id" label="{xen:phrase th_handler_type_objects}:" hint="{xen:phrase th_what_kind_of_handler_do_you_want_to_add_objects}">
+		<xen:options source="$handlerTypeOptions" />
+	</xen:radiounit>
+
+	<xen:submitunit save="{xen:phrase proceed}..." />
+
+</xen:form>]]></template>
+    <template title="th_handler_delete_objects"><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_handler_objects}: {$handler.title}</xen:title>
+
+<xen:h1>{xen:phrase th_confirm_deletion_of_handler_objects}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'handlers/edit', $handler}">{$handler.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'handlers/delete', $handler}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_handler_objects}:</p>
+	<strong><a href="{xen:adminlink 'handlers/edit', $handler}">{$handler.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase th_delete_handler_objects}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="th_handler_delete_objects."><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_handler_objects}: {$handler.title}</xen:title>
+
+<xen:h1>{xen:phrase th_confirm_deletion_of_handler_objects}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'handlers/edit', $handler}">{$handler.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'handlers/delete', $handler}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_handler_objects}:</p>
+	<strong><a href="{xen:adminlink 'handlers/edit', $handler}">{$handler.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase th_delete_handler_objects}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="th_handler_edit_objects"><![CDATA[<xen:title>{xen:if '{$handler.handler_id}', '{xen:phrase th_edit_handler_objects}: {$handler.title}', '{xen:phrase th_create_new_handler_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$handler.handler_id}', '{xen:phrase th_edit_handler_objects}: <em>{$handler.title}</em>', '{xen:phrase th_create_new_handler_objects}'}</xen:h1>
+
+<xen:if is="{$handler.handler_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink 'handlers'}#{xen:helper listitemid, $handler.handler_id}">{$handler.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'handlers/save', $handler}"
+	class="AutoValidator"
+	data-fieldValidatorUrl="{xen:adminlink '/validate-field', $handler}"
+	data-redirect="on">
+
+	<xen:textboxunit label="{xen:phrase th_handler_content_type_objects}:" explain=""
+		name="content_type" id="ctrl_content_type"
+		value="{$handler.content_type}" maxlength="255"
+	/>
+	<xen:selectunit label="{xen:phrase th_handler_handler_type_id_objects}:" explain=""
+		name="handler_type_id" id="ctrl_handler_type_id"
+		value="{$handler.handler_type_id}"
+	>
+		<xen:options source="$choices.handler_type_id" />
+	</xen:selectunit>
+	<xen:selectunit label="{xen:phrase th_handler_object_class_id_objects}:" explain=""
+		name="object_class_id" id="ctrl_object_class_id"
+		value="{$handler.object_class_id}"
+	>
+		<xen:options source="$choices.object_class_id" />
+	</xen:selectunit>
+
+	<xen:submitunit>
+		<input type="submit" name="saveexit" value="{xen:phrase save_and_exit}" accesskey="e" class="button primary" id="saveExitButton" />
+		<input type="submit" name="reload" value="{xen:phrase save_changes}" accesskey="s" class="button" id="saveReloadButton" data-ajaxvalue="{xen:phrase save_all_changes}" />
+		<xen:if is="{$handler.handler_id}">
+			<input type="button" value="{xen:phrase th_delete_handler_objects}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink handlers/delete, $handler}" />
+		</xen:if>
+	</xen:submitunit>
+</xen:form>]]></template>
+    <template title="th_handler_edit_objects."><![CDATA[<xen:title>{xen:if '{$handler.handler_id}', '{xen:phrase th_edit_handler_objects}: {$handler.title}', '{xen:phrase th_create_new_handler_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$handler.handler_id}', '{xen:phrase th_edit_handler_objects}: <em>{$handler.title}</em>', '{xen:phrase th_create_new_handler_objects}'}</xen:h1>
+
+<xen:if is="{$handler.handler_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink 'handlers'}#{xen:helper listitemid, $handler.handler_id}">{$handler.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'handlers/save', $handler}"
+	class="AutoValidator"
+	data-fieldValidatorUrl="{xen:adminlink '/validate-field', $handler}"
+	data-redirect="on">
+
+	<xen:textboxunit label="{xen:phrase th_handler_content_type_objects}:" explain=""
+		name="content_type" id="ctrl_content_type"
+		value="{$handler.content_type}" maxlength="255"
+	/>
+	<xen:selectunit label="{xen:phrase th_handler_object_class_id_objects}:" explain=""
+		name="object_class_id" id="ctrl_object_class_id"
+		value="{$handler.object_class_id}"
+	>
+		<xen:options source="$choices.object_class_id" />
+	</xen:selectunit>
+
+	<xen:submitunit>
+		<input type="submit" name="saveexit" value="{xen:phrase save_and_exit}" accesskey="e" class="button primary" id="saveExitButton" />
+		<input type="submit" name="reload" value="{xen:phrase save_changes}" accesskey="s" class="button" id="saveReloadButton" data-ajaxvalue="{xen:phrase save_all_changes}" />
+		<xen:if is="{$handler.handler_id}">
+			<input type="button" value="{xen:phrase th_delete_handler_objects}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink handlers/delete, $handler}" />
+		</xen:if>
+	</xen:submitunit>
+</xen:form>]]></template>
+    <template title="th_handler_list_objects"><![CDATA[<xen:title>{xen:phrase th_handlers_objects}</xen:title>
+
+<xen:h1>{xen:phrase th_handlers_objects}</xen:h1>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'handlers/add'}" class="button">+ {xen:phrase th_create_new_handler_objects}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink 'handlers/toggle'}" class="section AutoValidator">
+
+	<xen:if is="{$handlers}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase th_handlers_objects}
+		</h2>
+
+		<ol class="FilterList">
+			<xen:foreach loop="$handlers" key="$handlerId" value="$handler">
+				<xen:listitem id="{$handlerId}"
+					label="{xen:raw $handler.content_type}"
+					snippet="{$handler.handler_type_id}"
+					href="{xen:adminlink 'handlers/edit', $handler}"
+					delete="{xen:adminlink 'handlers/delete', $handler}"
+					deletehint="{xen:phrase delete}">
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $handlers}</span>', 'total={xen:count $handlers}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase th_there_are_no_handlers_objects}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="th_handler_list_objects."><![CDATA[<xen:title>{xen:phrase th_handlers_objects}</xen:title>
+
+<xen:h1>{xen:phrase th_handlers_objects}</xen:h1>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'handlers/add'}" class="button">+ {xen:phrase th_create_new_handler_objects}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink 'handlers/toggle'}" class="section AutoValidator">
+
+	<xen:if is="{$handlers}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase th_handlers_objects}
+		</h2>
+
+		<ol class="FilterList">
+			<xen:foreach loop="$handlers" key="$handlerId" value="$handler">
+				<xen:listitem id="{$handlerId}"
+					label="{xen:raw $handler.content_type}"
+					snippet="{$handler.handler_type_id}"
+					href="{xen:adminlink 'handlers/edit', $handler}"
+					delete="{xen:adminlink 'handlers/delete', $handler}"
+					deletehint="{xen:phrase delete}">
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $handlers}</span>', 'total={xen:count $handlers}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase th_there_are_no_handlers_objects}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="th_handler_type_delete_objects"><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_handler_type_objects}: {$handlerType.title}</xen:title>
+
+<xen:h1>{xen:phrase th_confirm_deletion_of_handler_type_objects}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'handler-types/edit', $handlerType}">{$handlerType.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'handler-types/delete', $handlerType}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_handler_type_objects}:</p>
+	<strong><a href="{xen:adminlink 'handler-types/edit', $handlerType}">{$handlerType.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase th_delete_handler_type_objects}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="th_handler_type_edit_objects"><![CDATA[<xen:title>{xen:if '{$handlerType.handler_type_id}', '{xen:phrase th_edit_handler_type_objects}: {$handlerType.title}', '{xen:phrase th_create_new_handler_type_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$handlerType.handler_type_id}', '{xen:phrase th_edit_handler_type_objects}: <em>{$handlerType.title}</em>', '{xen:phrase th_create_new_handler_type_objects}'}</xen:h1>
+
+<xen:if is="{$handlerType.handler_type_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink 'handler-types'}#{xen:helper listitemid, $handlerType.handler_type_id}">{$handlerType.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'handler-types/save', $handlerType}"
+	class="AutoValidator"
+	data-fieldValidatorUrl="{xen:adminlink '/validate-field', $handlerType}"
+	data-redirect="on">
+
+	<fieldset>
+		<xen:textboxunit label="{xen:phrase th_handler_type_title_objects}:" name="title" value="{$handlerType.title}" data-liveTitleTemplate="{xen:if {$handlerType.handler_type_id},
+			'{xen:phrase th_edit_handler_type_objects}: <em>%s</em>',
+			'{xen:phrase th_create_new_handler_type_objects}: <em>%s</em>'}" />
+		<xen:if is="{$handlerType.handler_type_id}">
+			<xen:controlunit label="{xen:phrase th_handler_type_id_objects}:">
+				<xen:html>{$handlerType.handler_type_id}</xen:html>
+				<xen:explain>{xen:phrase th_unique_identifier_for_handler_type_cannot_be_changed_objects}</xen:explain>
+			</xen:controlunit>
+		<xen:else />
+			<xen:textboxunit label="{xen:phrase th_handler_type_id_objects}:" name="new_handler_type_id">
+				<xen:explain>{xen:phrase th_unique_identifier_for_handler_type_cannot_be_changed_objects}</xen:explain>
+			</xen:textboxunit>
+		</xen:if>
+	</fieldset>
+	<xen:textboxunit label="{xen:phrase th_handler_type_controller_admin_class_objects}:" explain=""
+		name="controller_admin_class" id="ctrl_controller_admin_class"
+		value="{$handlerType.controller_admin_class}" maxlength=""
+	/>
+	<fieldset>
+		<xen:include template="helper_addon_unit" />
+	</fieldset>
+
+	<xen:submitunit>
+		<input type="submit" name="saveexit" value="{xen:phrase save_and_exit}" accesskey="e" class="button primary" id="saveExitButton" />
+		<input type="submit" name="reload" value="{xen:phrase save_changes}" accesskey="s" class="button" id="saveReloadButton" data-ajaxvalue="{xen:phrase save_all_changes}" />
+		<xen:if is="{$handlerType.handler_type_id}">
+			<input type="button" value="{xen:phrase th_delete_handler_type_objects}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink handler-types/delete, $handlerType}" />
+		</xen:if>
+	</xen:submitunit>
+</xen:form>]]></template>
+    <template title="th_handler_type_list_objects"><![CDATA[<xen:title>{xen:phrase th_handler_types_objects}</xen:title>
+
+<xen:h1>{xen:phrase th_handler_types_objects}</xen:h1>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'handler-types/add'}" class="button">+ {xen:phrase th_create_new_handler_type_objects}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink 'handler-types/toggle'}" class="section AutoValidator">
+
+	<xen:if is="{$handlerTypes}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase th_handler_types_objects}
+		</h2>
+
+		<ol class="FilterList">
+			<xen:foreach loop="$handlerTypes" key="$handlerTypeId" value="$handlerType">
+				<xen:listitem id="{$handlerTypeId}"
+					label="{xen:raw $handlerType.title}"
+					snippet="{$handlerType.addon_id}"
+					href="{xen:adminlink 'handler-types/edit', $handlerType}"
+					delete="{xen:adminlink 'handler-types/delete', $handlerType}"
+					deletehint="{xen:phrase delete}">
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $handlerTypes}</span>', 'total={xen:count $handlerTypes}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase th_there_are_no_handler_types_objects}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="th_object_class_delete_objects"><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_object_class_objects}: {$objectClass.title}</xen:title>
+
+<xen:h1>{xen:phrase th_confirm_deletion_of_object_class_objects}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'classes/edit', $objectClass}">{$objectClass.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'classes/delete', $objectClass}" class="deleteConfirmForm formOverlay">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_object_class_objects}:</p>
+	<strong><a href="{xen:adminlink 'classes/edit', $objectClass}">{$objectClass.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase th_delete_object_class_objects}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+    <template title="th_object_class_edit_objects"><![CDATA[<xen:title>{xen:if '{$objectClass.object_class_id}', '{xen:phrase th_edit_object_class_objects}: {$objectClass.title}', '{xen:phrase th_create_new_object_class_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$objectClass.object_class_id}', '{xen:phrase th_edit_object_class_objects}: <em>{$objectClass.title}</em>', '{xen:phrase th_create_new_object_class_objects}'}</xen:h1>
+
+<xen:if is="{$objectClass.object_class_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink 'classes'}#{xen:helper listitemid, $objectClass.object_class_id}">{$objectClass.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form action="{xen:adminlink 'classes/save', $objectClass}"
+	class="AutoValidator"
+	data-fieldValidatorUrl="{xen:adminlink 'classes/validate-field', $objectClass}"
+	data-redirect="on">
+
+	<fieldset>
+	<xen:textboxunit label="{xen:phrase th_object_class_title_objects}:" name="title" value="{$objectClass.title}" data-liveTitleTemplate="{xen:if {$objectClass.object_class_id},
+		'{xen:phrase th_edit_object_class_objects}: <em>%s</em>',
+		'{xen:phrase th_create_new_object_class_objects}: <em>%s</em>'}" />
+	</fieldset>
+	<xen:textboxunit label="{xen:phrase th_object_class_addon_id_objects}:" explain=""
+		name="addon_id" id="ctrl_addon_id"
+		value="{$objectClass.addon_id}" maxlength="25"
+	/>
+	<xen:selectunit label="{xen:phrase th_object_class_class_id_objects}:" explain=""
+		name="class_id" id="ctrl_class_id"
+		value="{$objectClass.class_id}"
+	>
+		<xen:options source="$choices.class_id" />
+	</xen:selectunit>
+
+	<xen:submitunit>
+		<input type="submit" name="saveexit" value="{xen:phrase save_and_exit}" accesskey="e" class="button primary" id="saveExitButton" />
+		<input type="submit" name="reload" value="{xen:phrase save_changes}" accesskey="s" class="button" id="saveReloadButton" data-ajaxvalue="{xen:phrase save_all_changes}" />
+		<xen:if is="{$objectClass.object_class_id}">
+			<input type="button" value="{xen:phrase th_delete_object_class_objects}..." accesskey="d" class="button OverlayTrigger"
+				data-href="{xen:adminlink classes/delete, $objectClass}" />
+		</xen:if>
+	</xen:submitunit>
+</xen:form>]]></template>
+    <template title="th_object_class_list_objects"><![CDATA[<xen:title>{xen:phrase th_object_classes_objects}</xen:title>
+
+<xen:h1>{xen:phrase th_object_classes_objects}</xen:h1>
+
+<xen:topctrl>
+	<a href="{xen:adminlink 'classes/add'}" class="button">+ {xen:phrase th_create_new_object_class_objects}</a>
+</xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink 'classes/toggle'}" class="section AutoValidator">
+
+	<xen:if is="{$objectClasses}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase th_object_classes_objects}
+		</h2>
+
+		<ol class="FilterList">
+			<xen:foreach loop="$objectClasses" key="$objectClassId" value="$objectClass">
+				<xen:listitem id="{$objectClassId}"
+					label="{xen:raw $objectClass.title}"
+					snippet="{$objectClass.class_id}"
+					href="{xen:adminlink 'classes/edit', $objectClass}"
+					delete="{xen:adminlink 'classes/delete', $objectClass}"
+					deletehint="{xen:phrase delete}">
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $objectClasses}</span>', 'total={xen:count $objectClasses}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase th_there_are_no_object_classes_objects}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+  </admin_templates>
+  <admin_template_modifications/>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="init_dependencies" execute_order="10" callback_class="ThemeHouse_Objects_Listener_InitDependencies" callback_method="initDependencies" active="1" hint="" description=""/>
+    <listener event_id="load_class_model" execute_order="10" callback_class="ThemeHouse_Objects_Listener_LoadClassModel" callback_method="loadClassModel" active="1" hint="" description=""/>
+  </code_event_listeners>
+  <cron/>
+  <email_templates/>
+  <email_template_modifications/>
+  <optiongroups/>
+  <permissions>
+    <permission_groups>
+      <permission_group permission_group_id="thObjects"/>
+    </permission_groups>
+    <permissions>
+      <permission permission_group_id="thObjects" permission_id="createClasses" permission_type="flag" default_value="unset" interface_group_id="thObjectsPermissions" display_order="10"/>
+      <permission permission_group_id="thObjects" permission_id="createObjectClasses" permission_type="flag" default_value="unset" interface_group_id="thObjectsPermissions" display_order="10"/>
+      <permission permission_group_id="thObjects" permission_id="deleteClass" permission_type="flag" default_value="unset" interface_group_id="thObjectsModeratorPermissions" display_order="10"/>
+      <permission permission_group_id="thObjects" permission_id="deleteObjectClass" permission_type="flag" default_value="unset" interface_group_id="thObjectsModeratorPermissions" display_order="10"/>
+      <permission permission_group_id="thObjects" permission_id="editClass" permission_type="flag" default_value="unset" interface_group_id="thObjectsModeratorPermissions" display_order="0"/>
+      <permission permission_group_id="thObjects" permission_id="editObjectClass" permission_type="flag" default_value="unset" interface_group_id="thObjectsModeratorPermissions" display_order="0"/>
+      <permission permission_group_id="thObjects" permission_id="viewClasses" permission_type="flag" default_value="unset" interface_group_id="thObjectsPermissions" display_order="0"/>
+      <permission permission_group_id="thObjects" permission_id="viewObjectClasses" permission_type="flag" default_value="unset" interface_group_id="thObjectsPermissions" display_order="0"/>
+    </permissions>
+    <interface_groups>
+      <interface_group interface_group_id="thObjectsModeratorPermissions" display_order="2000"/>
+      <interface_group interface_group_id="thObjectsPermissions" display_order="2000"/>
+    </interface_groups>
+  </permissions>
+  <phrases>
+    <phrase title="abstract_class" version_id="1354197638" version_string="1.0.0"><![CDATA[Abstract Class]]></phrase>
+    <phrase title="admin_control_panel_route_prefix" version_id="1352217121" version_string="1.0.0"><![CDATA[Admin Control Panel Route Prefix]]></phrase>
+    <phrase title="admin_navigation_classes" version_id="1344968133" version_string="1.0.0"><![CDATA[Classes & Objects]]></phrase>
+    <phrase title="admin_navigation_createClass" version_id="1344985225" version_string="1.0.0"><![CDATA[Create New Class]]></phrase>
+    <phrase title="admin_navigation_listClasses" version_id="1344985225" version_string="1.0.0"><![CDATA[List All Classes]]></phrase>
+    <phrase title="admin_permission_handler" version_id="1353107446" version_string="1.0.0"><![CDATA[Manage handlers]]></phrase>
+    <phrase title="admin_permission_handlerType" version_id="1353107446" version_string="1.0.0"><![CDATA[Manage handler types]]></phrase>
+    <phrase title="admin_permission_object" version_id="1344783782" version_string="1.0.0"><![CDATA[Manage objects]]></phrase>
+    <phrase title="admin_permission_objectClass" version_id="1354118466" version_string="1.0.0"><![CDATA[Manage classes]]></phrase>
+    <phrase title="applicable_classes" version_id="1344881364" version_string="1.0.0"><![CDATA[Applicable Classes]]></phrase>
+    <phrase title="classes" version_id="1344849007" version_string="1.0.0"><![CDATA[Classes]]></phrase>
+    <phrase title="classes_and_objects" version_id="1344985225" version_string="1.0.0"><![CDATA[Classes & Objects]]></phrase>
+    <phrase title="class_id" version_id="1344849007" version_string="1.0.0"><![CDATA[Class ID]]></phrase>
+    <phrase title="class_ids_must_be_unique" version_id="1344849007" version_string="1.0.0"><![CDATA[Class IDs must be unique.]]></phrase>
+    <phrase title="class_id_plural" version_id="1347804408" version_string="1.0.0"><![CDATA[Class ID (plural)]]></phrase>
+    <phrase title="confirm_deletion_of_object" version_id="1344849007" version_string="1.0.0"><![CDATA[Confirm Deletion of Object]]></phrase>
+    <phrase title="create" version_id="1354381278" version_string="1.0.0"><![CDATA[Create]]></phrase>
+    <phrase title="create_new_class" version_id="1344849007" version_string="1.0.0"><![CDATA[Create New Class]]></phrase>
+    <phrase title="create_new_custom_object_field" version_id="1344859255" version_string="1.0.0"><![CDATA[Create New Custom Object Field]]></phrase>
+    <phrase title="create_new_object" version_id="1344849007" version_string="1.0.0"><![CDATA[Create New Object]]></phrase>
+    <phrase title="create_new_x_object" version_id="1344985225" version_string="1.0.0"><![CDATA[Create New {title}]]></phrase>
+    <phrase title="custom_choices" version_id="1344953258" version_string="1.0.0"><![CDATA[Custom choices]]></phrase>
+    <phrase title="datawriter_options" version_id="1353020895" version_string="1.0.0"><![CDATA[Datawriter Options]]></phrase>
+    <phrase title="delete_class" version_id="1344849007" version_string="1.0.0"><![CDATA[Delete Class]]></phrase>
+    <phrase title="delete_object" version_id="1344849007" version_string="1.0.0"><![CDATA[Delete Object]]></phrase>
+    <phrase title="edit_class" version_id="1344849007" version_string="1.0.0"><![CDATA[Edit Class]]></phrase>
+    <phrase title="edit_object" version_id="1344849007" version_string="1.0.0"><![CDATA[Edit Object]]></phrase>
+    <phrase title="edit_x_object" version_id="1345410631" version_string="1.0.0"><![CDATA[Edit {title}]]></phrase>
+    <phrase title="export_options" version_id="1354464339" version_string="1.0.0"><![CDATA[Export Options]]></phrase>
+    <phrase title="extends" version_id="1354197638" version_string="1.0.0"><![CDATA[Extends]]></phrase>
+    <phrase title="hard_delete" version_id="1354453954" version_string="1.0.0"><![CDATA[Hard Delete]]></phrase>
+    <phrase title="lock" version_id="1354453954" version_string="1.0.0"><![CDATA[Lock]]></phrase>
+    <phrase title="log_ip_address" version_id="1353020895" version_string="1.0.0"><![CDATA[Log IP Address]]></phrase>
+    <phrase title="log_visitor_details" version_id="1353020895" version_string="1.0.0"><![CDATA[Log Visitor Details]]></phrase>
+    <phrase title="moderator_interface_group" version_id="1354467944" version_string="1.0.0"><![CDATA[Moderator Interface Group]]></phrase>
+    <phrase title="object" version_id="1344849007" version_string="1.0.0"><![CDATA[Objects]]></phrase>
+    <phrase title="objects" version_id="1344849007" version_string="1.0.0"><![CDATA[Objects]]></phrase>
+    <phrase title="objects_per_page" version_id="1349553710" version_string="1.0.0"><![CDATA[Objects Per Page]]></phrase>
+    <phrase title="permission_group_thObjects" version_id="1354118466" version_string="1.0.0"><![CDATA[[⌂] Objects Permissions]]></phrase>
+    <phrase title="permission_interface_thObjectsModeratorPermissions" version_id="1354118466" version_string="1.0.0"><![CDATA[[⌂] Objects Permissions]]></phrase>
+    <phrase title="permission_interface_thObjectsPermissions" version_id="1354118466" version_string="1.0.0"><![CDATA[[⌂] Objects Permissions]]></phrase>
+    <phrase title="permission_thObjects_createClasses" version_id="1354118466" version_string="1.0.0"><![CDATA[Create new  classes]]></phrase>
+    <phrase title="permission_thObjects_createObjectClasses" version_id="1354118466" version_string="1.0.0"><![CDATA[Create new  classes]]></phrase>
+    <phrase title="permission_thObjects_deleteClass" version_id="1354118466" version_string="1.0.0"><![CDATA[Delete  class]]></phrase>
+    <phrase title="permission_thObjects_deleteObjectClass" version_id="1354118466" version_string="1.0.0"><![CDATA[Delete  class]]></phrase>
+    <phrase title="permission_thObjects_editClass" version_id="1354118466" version_string="1.0.0"><![CDATA[Edit  class]]></phrase>
+    <phrase title="permission_thObjects_editObjectClass" version_id="1354118466" version_string="1.0.0"><![CDATA[Edit  class]]></phrase>
+    <phrase title="permission_thObjects_viewClasses" version_id="1354118466" version_string="1.0.0"><![CDATA[View classes]]></phrase>
+    <phrase title="permission_thObjects_viewObjectClasses" version_id="1354118466" version_string="1.0.0"><![CDATA[View classes]]></phrase>
+    <phrase title="please_confirm_that_you_want_to_delete_following_object" version_id="1344849007" version_string="1.0.0"><![CDATA[Please confirm that you want to delete the following object]]></phrase>
+    <phrase title="primary_key_id" version_id="1354464339" version_string="1.0.0"><![CDATA[Primary Key Id]]></phrase>
+    <phrase title="public_route_prefix" version_id="1352217121" version_string="1.0.0"><![CDATA[Public Route Prefix]]></phrase>
+    <phrase title="requested_class_not_found" version_id="1344849007" version_string="1.0.0"><![CDATA[Requested class not found.]]></phrase>
+    <phrase title="requested_object_not_found" version_id="1344849007" version_string="1.0.0"><![CDATA[Requested object not found.]]></phrase>
+    <phrase title="save_class" version_id="1344849007" version_string="1.0.0"><![CDATA[Save Class]]></phrase>
+    <phrase title="save_object" version_id="1344849007" version_string="1.0.0"><![CDATA[Save Object]]></phrase>
+    <phrase title="soft_delete" version_id="1354453954" version_string="1.0.0"><![CDATA[Soft Delete]]></phrase>
+    <phrase title="subtitle" version_id="1345323701" version_string="1.0.0"><![CDATA[Subtitle]]></phrase>
+    <phrase title="table_name" version_id="1354464339" version_string="1.0.0"><![CDATA[Table Name]]></phrase>
+    <phrase title="there_are_no_classes" version_id="1344849007" version_string="1.0.0"><![CDATA[There are no classes.]]></phrase>
+    <phrase title="there_are_no_objects" version_id="1344849007" version_string="1.0.0"><![CDATA[There are no objects.]]></phrase>
+    <phrase title="th_classes_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Classes]]></phrase>
+    <phrase title="th_classes_subtitle_alphabetical_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Subtitle (alphabetical)]]></phrase>
+    <phrase title="th_classes_title_alphabetical_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Title (alphabetical)]]></phrase>
+    <phrase title="th_class_addon_id_objects" version_id="1354122724" version_string="1.0.0"><![CDATA[Add-on]]></phrase>
+    <phrase title="th_class_class_id_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Class Id]]></phrase>
+    <phrase title="th_class_display_options_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Class Display Options]]></phrase>
+    <phrase title="th_class_subtitle_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Subtitle]]></phrase>
+    <phrase title="th_class_title_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Title]]></phrase>
+    <phrase title="th_confirm_deletion_of_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Confirm Deletion of Class]]></phrase>
+    <phrase title="th_confirm_deletion_of_handler_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Confirm Deletion of Handler]]></phrase>
+    <phrase title="th_confirm_deletion_of_handler_type_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Confirm Deletion of Handler Type]]></phrase>
+    <phrase title="th_confirm_deletion_of_object_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Confirm Deletion of Class]]></phrase>
+    <phrase title="th_create_new_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Create New Class]]></phrase>
+    <phrase title="th_create_new_handler_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Create New Handler]]></phrase>
+    <phrase title="th_create_new_handler_type_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Create New Handler Type]]></phrase>
+    <phrase title="th_create_new_object_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Create New Class]]></phrase>
+    <phrase title="th_delete_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Delete Class]]></phrase>
+    <phrase title="th_delete_handler_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Delete Handler]]></phrase>
+    <phrase title="th_delete_handler_type_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Delete Handler Type]]></phrase>
+    <phrase title="th_delete_object_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Delete Class]]></phrase>
+    <phrase title="th_edit_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Edit Class]]></phrase>
+    <phrase title="th_edit_handler_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Edit Handler]]></phrase>
+    <phrase title="th_edit_handler_type_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Edit Handler Type]]></phrase>
+    <phrase title="th_edit_object_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Edit Class]]></phrase>
+    <phrase title="th_handlers_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Handlers]]></phrase>
+    <phrase title="th_handler_addon_id_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Add-on]]></phrase>
+    <phrase title="th_handler_content_type_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Content Type]]></phrase>
+    <phrase title="th_handler_handler_type_id_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Handler Type]]></phrase>
+    <phrase title="th_handler_object_class_id_objects" version_id="1354125728" version_string="1.0.0"><![CDATA[Object Class Id]]></phrase>
+    <phrase title="th_handler_subtitle_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Subtitle]]></phrase>
+    <phrase title="th_handler_title_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Title]]></phrase>
+    <phrase title="th_handler_types_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Handler Types]]></phrase>
+    <phrase title="th_handler_type_addon_id_objects" version_id="1354023298" version_string="1.0.0"><![CDATA[Add-on]]></phrase>
+    <phrase title="th_handler_type_controller_admin_class_objects" version_id="1354030313" version_string="1.0.0"><![CDATA[Controller Admin Class]]></phrase>
+    <phrase title="th_handler_type_id_objects" version_id="1354094015" version_string="1.0.0"><![CDATA[Handler Type Id]]></phrase>
+    <phrase title="th_handler_type_objects" version_id="1354024879" version_string="1.0.0"><![CDATA[Handler Type]]></phrase>
+    <phrase title="th_handler_type_subtitle_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Subtitle]]></phrase>
+    <phrase title="th_handler_type_title_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Title]]></phrase>
+    <phrase title="th_object_classes_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Classes]]></phrase>
+    <phrase title="th_object_classes_subtitle_alphabetical_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Subtitle (alphabetical)]]></phrase>
+    <phrase title="th_object_classes_title_alphabetical_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Title (alphabetical)]]></phrase>
+    <phrase title="th_object_class_addon_id_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Add-on]]></phrase>
+    <phrase title="th_object_class_class_id_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Class Id]]></phrase>
+    <phrase title="th_object_class_display_options_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Class Display Options]]></phrase>
+    <phrase title="th_object_class_subtitle_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Subtitle]]></phrase>
+    <phrase title="th_object_class_title_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Title]]></phrase>
+    <phrase title="th_order_classes_in_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Order classes in]]></phrase>
+    <phrase title="th_order_object_classes_in_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Order classes in]]></phrase>
+    <phrase title="th_please_confirm_want_to_delete_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Please confirm that you want to delete the following class]]></phrase>
+    <phrase title="th_please_confirm_want_to_delete_handler_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[Please confirm that you want to delete the following handler]]></phrase>
+    <phrase title="th_please_confirm_want_to_delete_handler_type_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[Please confirm that you want to delete the following handler type]]></phrase>
+    <phrase title="th_please_confirm_want_to_delete_object_class_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Please confirm that you want to delete the following class]]></phrase>
+    <phrase title="th_requested_class_not_found_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[The requested class could not be found.]]></phrase>
+    <phrase title="th_requested_handler_not_found_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[The requested handler could not be found.]]></phrase>
+    <phrase title="th_requested_handler_type_not_found_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[The requested handler type could not be found.]]></phrase>
+    <phrase title="th_requested_object_class_not_found_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[The requested class could not be found.]]></phrase>
+    <phrase title="th_sort_classes_by_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Sort classes by]]></phrase>
+    <phrase title="th_sort_object_classes_by_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Sort classes by]]></phrase>
+    <phrase title="th_there_are_no_classes_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[There are no classes.]]></phrase>
+    <phrase title="th_there_are_no_handlers_objects" version_id="1354097522" version_string="1.0.0"><![CDATA[There are no handlers.]]></phrase>
+    <phrase title="th_there_are_no_handler_types_objects" version_id="1353107446" version_string="1.0.0"><![CDATA[There are no handler types.]]></phrase>
+    <phrase title="th_there_are_no_object_classes_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[There are no classes.]]></phrase>
+    <phrase title="th_unique_identifier_for_handler_type_cannot_be_changed_objects" version_id="1354094015" version_string="1.0.0"><![CDATA[This is the unique identifier for this handler type. It cannot be changed once set.]]></phrase>
+    <phrase title="th_viewing_classes_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Viewing classes]]></phrase>
+    <phrase title="th_viewing_object_classes_objects" version_id="1354118466" version_string="1.0.0"><![CDATA[Viewing classes]]></phrase>
+    <phrase title="th_what_kind_of_handler_do_you_want_to_add_objects" version_id="1354024879" version_string="1.0.0"><![CDATA[What kind of handler do you want to add?]]></phrase>
+    <phrase title="title_full" version_id="1354464339" version_string="1.0.0"><![CDATA[Title (full)]]></phrase>
+    <phrase title="title_plural" version_id="1347804408" version_string="1.0.0"><![CDATA[Title (plural)]]></phrase>
+  </phrases>
+  <route_prefixes>
+    <route_type type="admin">
+      <prefix original_prefix="classes" class="ThemeHouse_Objects_Route_PrefixAdmin_Classes" build_link="data_only"/>
+      <prefix original_prefix="handler-types" class="ThemeHouse_Objects_Route_PrefixAdmin_HandlerTypes" build_link="data_only"/>
+      <prefix original_prefix="handlers" class="ThemeHouse_Objects_Route_PrefixAdmin_Handlers" build_link="data_only"/>
+      <prefix original_prefix="objects" class="ThemeHouse_Objects_Route_PrefixAdmin_Objects" build_link="data_only"/>
+    </route_type>
+    <route_type type="public">
+      <prefix original_prefix="classes" class="ThemeHouse_Objects_Route_Prefix_Classes" build_link="data_only"/>
+      <prefix original_prefix="objects" class="ThemeHouse_Objects_Route_Prefix_Objects" build_link="data_only"/>
+    </route_type>
+  </route_prefixes>
+  <style_properties/>
+  <templates>
+    <template title="object_edit" version_id="1345410631" version_string="1.0.0"><![CDATA[<xen:title>{xen:if '{$object.object_id}', '{xen:phrase edit_x_object, 'title={$class.title}'}: {$object.title}', '{xen:phrase create_new_object}'}</xen:title>
+
+<xen:h1>{xen:if '{$object.object_id}', '{xen:phrase edit_x_object, 'title={$class.title}'}: <em>{$object.title}</em>', '{xen:phrase create_new_x_object, 'title={$class.title}'}'}</xen:h1>
+
+<xen:if is="{$object.object_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes/list, $class}">{$class.title}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes/list, $class}#{xen:helper listitemid, $object.object_id}">{$object.title}</xen:breadcrumb>
+	</xen:navigation>
+<xen:else />
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink classes}">{xen:phrase classes_and_objects}</xen:breadcrumb>
+		<xen:breadcrumb href="{xen:adminlink classes/list, $class}">{$class.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+
+<form action="{xen:link 'objects/save', $object}" method="post" class="xenForm formOverlay AutoValidator">
+
+	<xen:hook name="object_edit">
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_title_object_edit">{xen:phrase title}:</label></dt>
+		<dd><input type="text" name="title" value="{$object.title}" class="textCtrl" id="ctrl_title_object_edit" data-liveTitleTemplate="{xen:if {$object.object_id},
+		'{xen:phrase edit_x_object, 'title={$class.title}'}: <em>%s</em>',
+		'{xen:phrase create_new_x_object, 'title={$class.title}'}: <em>%s</em>'}" maxlength="100" /></dd>
+	</dl>
+	</xen:hook>
+
+	<input type="hidden" name="class_id" value="{$class.class_id}" />
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd>
+			<input type="submit" value="{xen:phrase save_changes}" accesskey="s" class="button primary" />
+			<xen:if is="{$object.object_id} && {$canDeleteObject}">
+				<input type="button" value="{xen:phrase delete_object}..." accesskey="d" class="button OverlayTrigger"
+					data-href="{xen:link objects/delete, $object}" />
+			</xen:if>
+		</dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="th_class_delete_objects" version_id="0" version_string=""><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_class_objects}: {$class.title}</xen:title>
+<xen:h1>{xen:phrase th_confirm_deletion_of_class_objects}</xen:h1>
+
+<xen:require css="th_objects.css" />
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'classes/edit', $class}">{$class.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<form action="{xen:link 'classes/delete', $class}" method="post" class="xenForm formOverlay deleteConfirmForm" id="delete-class">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_class_objects}:</p>
+	<strong><a href="{xen:link 'classes/edit', $class}">{$class.title}</a></strong>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd>
+			<input type="submit" value="{xen:phrase th_delete_class_objects}" class="button primary" />
+		</dd>
+	</dl>
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="th_class_edit_objects" version_id="0" version_string=""><![CDATA[<xen:title>{xen:if '{$class.class_id}', '{xen:phrase th_edit_class_objects}: {$class.title}', '{xen:phrase th_create_new_class_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$class.class_id}', '{xen:phrase th_edit_class_objects}: <em>{$class.title}</em>', '{xen:phrase th_create_new_class_objects}'}</xen:h1>
+
+<xen:if is="{$class.class_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:link 'classes'}#{xen:helper listitemid, $class.class_id}">{$class.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<form action="{xen:link 'classes/save', $class}"
+	class="xenForm formOverlay AutoValidator"
+	data-fieldValidatorUrl="{xen:link 'classes/validate-field', $class}"
+	data-redirect="on">
+
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_title">{xen:phrase th_class_title_objects}:</label></dt>
+		<dd><input type="text" name="title" value="{$class.title}" class="textCtrl" id="ctrl_title" data-liveTitleTemplate="{xen:if {$class.class_id},
+		'{xen:phrase th_edit_class_objects}: <em>%s</em>',
+		'{xen:phrase th_create_new_class_objects}: <em>%s</em>'}" maxlength="100" /></dd>
+	</dl>
+	<dl class="ctrlUnit">
+		<dt>
+			<label for="ctrl_class_id">{xen:phrase th_class_class_id_objects}:</label>
+			<dfn>{xen:phrase required}</dfn>
+		</dt>
+		<dd>
+			<select name="class_id" id="ctrl_class_id" class="textCtrl">
+				<xen:foreach loop="{$choices.class_id}" key="$choice" value="$text">
+					<option value="{$choice}" {xen:selected '{$class.class_id} == {$choice}'}>{xen:raw $text}</option>
+				</xen:foreach>
+			</select>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd>
+			<input type="submit" value="{xen:phrase save_changes}" accesskey="s" class="button primary" data-ajaxvalue="{xen:phrase save_all_changes}" />
+			<xen:if is="{$canDeleteClass}">
+				<input type="button" value="{xen:phrase th_delete_class_objects}..." accesskey="d" class="button OverlayTrigger"
+					data-href="{xen:link classes/delete, $class}" />
+			</xen:if>
+		</dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="th_class_list_item_objects" version_id="0" version_string=""><![CDATA[<xen:require css="discussion_list.css" />
+<xen:require css="th_objects.css" />
+
+<li id="class-{$class.main_subject_id}" class="discussionListItem">
+	<xen:if is="{$class.canDelete}">
+		<a href="{xen:link 'classes/delete', $class}" class="delete OverlayTrigger secondaryContent" title="{xen:phrase delete}"><span>{xen:phrase delete}...</span></a>
+	</xen:if>
+	<h4>
+		<a href="{xen:link 'classes', $class}">
+			<em>{$class.title}</em>
+			<dfn>{$class.subtitle}</dfn>
+		</a>
+	</h4>
+</li>]]></template>
+    <template title="th_class_list_objects" version_id="0" version_string=""><![CDATA[<xen:title>{xen:phrase th_classes_objects}</xen:title>
+<xen:h1>{xen:phrase th_classes_objects}</xen:h1>
+
+<xen:require css="discussion_list.css" />
+<xen:require css="th_objects.css" />
+<xen:require js="js/xenforo/discussion_list.js" />
+
+<xen:if is="{$canCreateClasses}">
+	<xen:topctrl><a href="{xen:link 'classes/add'}" class="callToAction OverlayTrigger"><span>{xen:phrase th_create_new_class_objects}</span></a></xen:topctrl>
+</xen:if>
+
+<div class="discussionList section sectionMain">
+
+	<form action="{xen:link 'classes/edit'}" method="post" class="DiscussionList">
+
+		<dl class="sectionHeaders">
+			<dd class="main">
+				<a href="{xen:link classes, '', '_params={$orderParams.title}'}" class="title"><span>{xen:phrase th_class_title_objects}{xen:helper sortArrow, $order, $orderDirection, title}</span></a>
+				<a href="{xen:link classes, '', '_params={$orderParams.subtitle}'}" class="subtitle"><span>{xen:phrase th_class_subtitle_objects}{xen:helper sortArrow, $order, $orderDirection, subtitle}</span></a>
+			</dd>
+		</dl>
+
+		<ol class="discussionListItems">
+			<xen:if is="{$classes}">
+				<xen:foreach loop="$classes" value="$class">
+					<xen:include template="th_class_list_item_objects" />
+				</xen:foreach>
+			<xen:else />
+				<li class="primaryContent">{xen:phrase th_there_are_no_classes_objects}</li>
+			</xen:if>
+		</ol>
+
+		<div class="sectionFooter InlineMod SelectionCountContainer">
+			<span class="contentSummary">{xen:phrase showing_x_of_y_items, 'count={xen:count $classes}', 'total={xen:count $classes}'}</span>
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+
+	<h3 id="DiscussionListOptionsHandle" class="JsOnly"><a href="#">{xen:phrase th_class_display_options_objects}</a></h3>
+
+	<form action="{xen:link 'classes'}" method="post" class="DiscussionListOptions secondaryContent">
+
+		<div class="controlGroup">
+			<label for="ctrl_order">{xen:phrase th_sort_classes_by_objects}:</label>
+			<select name="order" id="ctrl_order" class="textCtrl">
+				<option value="title" {xen:selected "{$order} == 'title'"}>{xen:phrase th_classes_title_alphabetical_objects}</option>
+				<option value="subtitle" {xen:selected "{$order} == 'subtitle'"}>{xen:phrase th_classes_subtitle_alphabetical_objects}</option>
+			</select>
+		</div>
+
+		<div class="controlGroup">
+			<label for="ctrl_direction">{xen:phrase th_order_classes_in_objects}:</label>
+			<select name="direction" id="ctrl_direction" class="textCtrl">
+				<option value="desc" {xen:selected "{$orderDirection} == 'desc'"}>{xen:phrase descending_order}</option>
+				<option value="asc" {xen:selected "{$orderDirection} == 'asc'"}>{xen:phrase ascending_order}</option>
+			</select>
+		</div>
+
+		<div class="buttonGroup">
+			<input type="submit" class="button primary" value="{xen:phrase set_options}" />
+			<input type="reset" class="button" value="{xen:phrase cancel}" />
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+
+</div>
+
+<div class="pageNavLinkGroup">
+	<div class="linkGroup">
+		<xen:if is="{$canCreateClasses}">
+			<a href="{xen:link 'classes/add'}" class="callToAction OverlayTrigger"><span>{xen:phrase th_create_new_class_objects}</span></a>
+		</xen:if>
+	</div>
+</div>]]></template>
+    <template title="th_class_objects.css" version_id="0" version_string=""><![CDATA[.classPairs {
+	width: 700px;
+}
+.classPairs dt {
+	width: 30%;
+}
+.classPairs dd {
+	width: 68%;
+}
+
+.classMeta {
+	font-size: 11px;
+	padding: 15px 5px 5px;
+	overflow: hidden;
+	zoom: 1;
+}]]></template>
+    <template title="th_class_view_objects" version_id="0" version_string=""><![CDATA[<xen:require css="th_class_objects.css" />
+
+<xen:title>{$class.title}</xen:title>
+
+<div class="section">
+	<h3 class="textHeading"></h3>
+
+	<div class="primaryContent">
+		<div class="pairsColumns classPairs">
+			<dl>
+				<dt>{xen:phrase th_class_title_objects}:</dt>
+				<dd>{$class.title}</dd>
+			</dl>
+			<dl>
+				<dt>{xen:phrase th_class_class_id_objects}:</dt>
+				<dd>
+					{$class.class_id}
+				</dd>
+			</dl>
+		</div>
+	</div>
+	<div class="classMeta">
+		<div class="privateControls">
+			<xen:if is="{$canEditClass}">
+				<a href="{xen:link classes/edit, $class}" class="item control edit OverlayTrigger">{xen:phrase edit}</a>
+			</xen:if>
+		</div>
+	</div>
+</div>]]></template>
+    <template title="th_objects.css" version_id="0" version_string=""><![CDATA[.discussionList .discussionListItem
+{
+	overflow: hidden; zoom: 1;
+	line-height: 20px;
+	padding: 0;
+	vertical-align: bottom;
+}
+
+	.discussionList .discussionListItem em,
+	.discussionList .discussionListItem dfn
+	{
+		font-style: normal;
+	}
+
+	.discussionList .discussionListItem:hover h4
+	{
+		background-color: {xen:property secondaryLightest};
+	}
+
+.discussionList .sectionHeaders span
+{
+	{xen:property subHeading.padding}
+	display: block;
+}
+
+	.discussionList .sectionHeaders .main .subtitle {
+		text-align: right;
+	}
+
+.discussionList .discussionListItem .secondaryContent,
+.discussionList .discussionListItem h4 a
+{
+	padding: 5px;
+	display: block;
+	float: right;
+	border-bottom: none;
+	background-image: none;
+	background-repeat: no-repeat;
+	background-position: left center;
+}
+
+.discussionList .discussionListItem h4 a
+{
+	float: none;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+	.discussionList .discussionListItem h4 a dfn
+	{
+		font-size: 11px;
+		color: {xen:property faintTextColor};
+		line-height: 14px;
+	}
+
+
+.discussionList .discussionListItem a:hover
+{
+	text-decoration: none;
+}
+
+.discussionList .discussionListItem .secondaryContent
+{
+	border-left: 1px solid {xen:property primaryLighterStill};
+	padding: 5px 10px;
+	font-size: 11px;
+	text-align: center;
+}
+
+	.discussionList .discussionListItem .secondaryContent:hover
+	{
+		background-color: {xen:property primaryLighterStill};
+	}
+
+.discussionList .discussionListItem .delete
+{
+	padding: 0px;
+	width: 30px;
+	height: 30px;
+}
+
+	.discussionList .discussionListItem .delete span
+	{
+		display: block;
+		background: transparent url('{xen:property imagePath}/xenforo/permissions/deny.png') no-repeat center center;
+		cursor: pointer;
+		padding: 5px;
+		width: 20px;
+		height: 20px;
+		overflow: hidden;
+		white-space: nowrap;
+		text-indent: -1000px;
+	}
+
+.deleteConfirmForm strong dfn
+{
+display: block;
+font-size: 11px;
+color: {xen:property mutedTextColor};
+}
+
+.deleteConfirmForm p em
+{
+	font-style: italic;
+}
+
+.deleteConfirmForm strong
+{
+	display: block;
+	margin: 10px;
+	margin-left: 20px;
+	font-size: 14pt;
+}]]></template>
+    <template title="th_object_class_delete_objects" version_id="0" version_string=""><![CDATA[<xen:title>{xen:phrase th_confirm_deletion_of_object_class_objects}: {$objectClass.title}</xen:title>
+<xen:h1>{xen:phrase th_confirm_deletion_of_object_class_objects}</xen:h1>
+
+<xen:require css="th_objects.css" />
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:link 'classes/edit', $objectClass}">{$objectClass.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<form action="{xen:link 'classes/delete', $objectClass}" method="post" class="xenForm formOverlay deleteConfirmForm" id="delete-objectClass">
+
+	<p>{xen:phrase th_please_confirm_want_to_delete_object_class_objects}:</p>
+	<strong><a href="{xen:link 'classes/edit', $objectClass}">{$objectClass.title}</a></strong>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd>
+			<input type="submit" value="{xen:phrase th_delete_object_class_objects}" class="button primary" />
+		</dd>
+	</dl>
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="th_object_class_edit_objects" version_id="0" version_string=""><![CDATA[<xen:title>{xen:if '{$objectClass.object_class_id}', '{xen:phrase th_edit_object_class_objects}: {$objectClass.title}', '{xen:phrase th_create_new_object_class_objects}'}</xen:title>
+
+<xen:h1>{xen:if '{$objectClass.object_class_id}', '{xen:phrase th_edit_object_class_objects}: <em>{$objectClass.title}</em>', '{xen:phrase th_create_new_object_class_objects}'}</xen:h1>
+
+<xen:if is="{$objectClass.object_class_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:link 'classes'}#{xen:helper listitemid, $objectClass.object_class_id}">{$objectClass.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<form action="{xen:link 'classes/save', $objectClass}"
+	class="xenForm formOverlay AutoValidator"
+	data-fieldValidatorUrl="{xen:link 'classes/validate-field', $objectClass}"
+	data-redirect="on">
+
+	<dl class="ctrlUnit">
+		<dt><label for="ctrl_title">{xen:phrase th_object_class_title_objects}:</label></dt>
+		<dd><input type="text" name="title" value="{$objectClass.title}" class="textCtrl" id="ctrl_title" data-liveTitleTemplate="{xen:if {$objectClass.object_class_id},
+		'{xen:phrase th_edit_object_class_objects}: <em>%s</em>',
+		'{xen:phrase th_create_new_object_class_objects}: <em>%s</em>'}" maxlength="100" /></dd>
+	</dl>
+	<dl class="ctrlUnit">
+		<dt>
+			<label for="ctrl_addon_id">{xen:phrase th_object_class_addon_id_objects}:</label>
+		</dt>
+		<dd>
+			<input type="text" name="addon_id" value="{$objectClass.addon_id}"
+				id="ctrl_addon_id"
+				class="textCtrl" maxlength="25"
+			/>
+		</dd>
+	</dl>
+	<dl class="ctrlUnit">
+		<dt>
+			<label for="ctrl_class_id">{xen:phrase th_object_class_class_id_objects}:</label>
+			<dfn>{xen:phrase required}</dfn>
+		</dt>
+		<dd>
+			<select name="class_id" id="ctrl_class_id" class="textCtrl">
+				<xen:foreach loop="{$choices.class_id}" key="$choice" value="$text">
+					<option value="{$choice}" {xen:selected '{$objectClass.class_id} == {$choice}'}>{xen:raw $text}</option>
+				</xen:foreach>
+			</select>
+		</dd>
+	</dl>
+
+	<dl class="ctrlUnit submitUnit">
+		<dt></dt>
+		<dd>
+			<input type="submit" value="{xen:phrase save_changes}" accesskey="s" class="button primary" data-ajaxvalue="{xen:phrase save_all_changes}" />
+			<xen:if is="{$canDeleteObjectClass}">
+				<input type="button" value="{xen:phrase th_delete_object_class_objects}..." accesskey="d" class="button OverlayTrigger"
+					data-href="{xen:link classes/delete, $objectClass}" />
+			</xen:if>
+		</dd>
+	</dl>
+
+	<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+</form>]]></template>
+    <template title="th_object_class_list_item_objects" version_id="0" version_string=""><![CDATA[<xen:require css="discussion_list.css" />
+<xen:require css="th_objects.css" />
+
+<li id="objectClass-{$objectClass.main_subject_id}" class="discussionListItem">
+	<xen:if is="{$objectClass.canDelete}">
+		<a href="{xen:link 'classes/delete', $objectClass}" class="delete OverlayTrigger secondaryContent" title="{xen:phrase delete}"><span>{xen:phrase delete}...</span></a>
+	</xen:if>
+	<h4>
+		<a href="{xen:link 'classes', $objectClass}">
+			<em>{$objectClass.title}</em>
+			<dfn>{$objectClass.subtitle}</dfn>
+		</a>
+	</h4>
+</li>]]></template>
+    <template title="th_object_class_list_objects" version_id="0" version_string=""><![CDATA[<xen:title>{xen:phrase th_object_classes_objects}</xen:title>
+<xen:h1>{xen:phrase th_object_classes_objects}</xen:h1>
+
+<xen:require css="discussion_list.css" />
+<xen:require css="th_objects.css" />
+<xen:require js="js/xenforo/discussion_list.js" />
+
+<xen:if is="{$canCreateObjectClasses}">
+	<xen:topctrl><a href="{xen:link 'classes/add'}" class="callToAction OverlayTrigger"><span>{xen:phrase th_create_new_object_class_objects}</span></a></xen:topctrl>
+</xen:if>
+
+<div class="discussionList section sectionMain">
+
+	<form action="{xen:link 'classes/edit'}" method="post" class="DiscussionList">
+
+		<dl class="sectionHeaders">
+			<dd class="main">
+				<a href="{xen:link classes, '', '_params={$orderParams.title}'}" class="title"><span>{xen:phrase th_object_class_title_objects}{xen:helper sortArrow, $order, $orderDirection, title}</span></a>
+				<a href="{xen:link classes, '', '_params={$orderParams.subtitle}'}" class="subtitle"><span>{xen:phrase th_object_class_subtitle_objects}{xen:helper sortArrow, $order, $orderDirection, subtitle}</span></a>
+			</dd>
+		</dl>
+
+		<ol class="discussionListItems">
+			<xen:if is="{$objectClasses}">
+				<xen:foreach loop="$objectClasses" value="$objectClass">
+					<xen:include template="th_object_class_list_item_objects" />
+				</xen:foreach>
+			<xen:else />
+				<li class="primaryContent">{xen:phrase th_there_are_no_object_classes_objects}</li>
+			</xen:if>
+		</ol>
+
+		<div class="sectionFooter InlineMod SelectionCountContainer">
+			<span class="contentSummary">{xen:phrase showing_x_of_y_items, 'count={xen:count $objectClasses}', 'total={xen:count $objectClasses}'}</span>
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+
+	<h3 id="DiscussionListOptionsHandle" class="JsOnly"><a href="#">{xen:phrase th_object_class_display_options_objects}</a></h3>
+
+	<form action="{xen:link 'classes'}" method="post" class="DiscussionListOptions secondaryContent">
+
+		<div class="controlGroup">
+			<label for="ctrl_order">{xen:phrase th_sort_object_classes_by_objects}:</label>
+			<select name="order" id="ctrl_order" class="textCtrl">
+				<option value="title" {xen:selected "{$order} == 'title'"}>{xen:phrase th_object_classes_title_alphabetical_objects}</option>
+				<option value="subtitle" {xen:selected "{$order} == 'subtitle'"}>{xen:phrase th_object_classes_subtitle_alphabetical_objects}</option>
+			</select>
+		</div>
+
+		<div class="controlGroup">
+			<label for="ctrl_direction">{xen:phrase th_order_object_classes_in_objects}:</label>
+			<select name="direction" id="ctrl_direction" class="textCtrl">
+				<option value="desc" {xen:selected "{$orderDirection} == 'desc'"}>{xen:phrase descending_order}</option>
+				<option value="asc" {xen:selected "{$orderDirection} == 'asc'"}>{xen:phrase ascending_order}</option>
+			</select>
+		</div>
+
+		<div class="buttonGroup">
+			<input type="submit" class="button primary" value="{xen:phrase set_options}" />
+			<input type="reset" class="button" value="{xen:phrase cancel}" />
+		</div>
+
+		<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+	</form>
+
+</div>
+
+<div class="pageNavLinkGroup">
+	<div class="linkGroup">
+		<xen:if is="{$canCreateObjectClasses}">
+			<a href="{xen:link 'classes/add'}" class="callToAction OverlayTrigger"><span>{xen:phrase th_create_new_object_class_objects}</span></a>
+		</xen:if>
+	</div>
+</div>]]></template>
+    <template title="th_object_class_objects.css" version_id="0" version_string=""><![CDATA[.objectClassPairs {
+	width: 700px;
+}
+.objectClassPairs dt {
+	width: 30%;
+}
+.objectClassPairs dd {
+	width: 68%;
+}
+
+.objectClassMeta {
+	font-size: 11px;
+	padding: 15px 5px 5px;
+	overflow: hidden;
+	zoom: 1;
+}]]></template>
+    <template title="th_object_class_view_objects" version_id="0" version_string=""><![CDATA[<xen:require css="th_object_class_objects.css" />
+
+<xen:title>{$objectClass.title}</xen:title>
+
+<div class="section">
+	<h3 class="textHeading"></h3>
+
+	<div class="primaryContent">
+		<div class="pairsColumns objectClassPairs">
+			<dl>
+				<dt>{xen:phrase th_object_class_title_objects}:</dt>
+				<dd>{$objectClass.title}</dd>
+			</dl>
+			<dl>
+				<dt>{xen:phrase th_object_class_addon_id_objects}:</dt>
+				<dd>
+					{$objectClass.addon_id}
+				</dd>
+			</dl>
+			<dl>
+				<dt>{xen:phrase th_object_class_class_id_objects}:</dt>
+				<dd>
+					{$objectClass.class_id}
+				</dd>
+			</dl>
+		</div>
+	</div>
+	<div class="objectClassMeta">
+		<div class="privateControls">
+			<xen:if is="{$canEditObjectClass}">
+				<a href="{xen:link classes/edit, $objectClass}" class="item control edit OverlayTrigger">{xen:phrase edit}</a>
+			</xen:if>
+		</div>
+	</div>
+</div>]]></template>
+  </templates>
+  <public_template_modifications>
+    <modification template="footer" modification_key="th_copyrightNotice_objects" description="Copyright notice for [⌂] Objects" execution_order="1" enabled="1" action="callback">
+      <find><![CDATA[/{xen:phrase (?:xenforo|extra)_copyright}/]]></find>
+      <replace><![CDATA[ThemeHouse_Listener_InitDependencies::copyrightNotice]]></replace>
+    </modification>
+  </public_template_modifications>
+  <bb_code_media_sites/>
+  <bb_codes/>
+</addon>
